@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER | 深層心理・無意識領域のAI鏡像診断</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        serif: ['"Noto Serif JP"', 'serif'],
+                    },
+                    colors: {
+                        abyss: {
+                            950: '#05050a',
+                            900: '#0a0b14',
+                            800: '#121424',
+                            700: '#1c2038',
+                        },
+                        mystic: {
+                            gold: '#d4af37',
+                            amber: '#f59e0b',
+                            violet: '#8b5cf6',
+                            cyan: '#06b6d4'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05050a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(18, 20, 36, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .gold-border-glow {
+            border-color: rgba(212, 175, 55, 0.35);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
+        }
+        .violet-border-glow {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.15);
+        }
+        .option-btn {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.45);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05050a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1c2038;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-purple-500/30 selection:text-purple-200">
+
+    <!-- 背景パーティクル用キャンバス -->
+    <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-60"></canvas>
+
+    <!-- 装飾用の光彩 -->
+    <div class="fixed top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-900/15 blur-[130px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-15%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-900/15 blur-[130px] pointer-events-none z-0"></div>
+
+    <!-- ナビゲーションヘッダー -->
+    <header class="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between border-b border-white/5">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="confirmReset()">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600/40 to-amber-500/30 border border-amber-400/30 flex items-center justify-center shadow-lg shadow-purple-950/50">
+                <i class="ph ph-eye text-amber-300 text-xl"></i>
+            </div>
+            <div>
+                <span class="font-serif tracking-[0.2em] text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-purple-200 to-indigo-200">AETHER</span>
+                <span class="hidden sm:inline-block ml-2 text-xs text-slate-400 font-light">深層心理・無意識領域のAI鏡像診断</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="demo-btn" onclick="loadSampleReport()" class="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition flex items-center gap-1.5">
+                <i class="ph ph-sparkle text-amber-400"></i>
+                <span>診断結果サンプルを見る</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ領域 -->
+    <main class="relative z-10 flex-grow flex items-center justify-center w-full max-w-4xl mx-auto px-4 sm:px-6 py-8">
+
+        <!-- 1. イントロダクション画面 -->
+        <section id="screen-intro" class="w-full text-center space-y-8 py-6">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-300 text-xs tracking-wider mb-2">
+                <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                ユング心理学 × 夢分析・元型タロット投影 × 適応型AIプロファイリング
+            </div>
+
+            <h1 class="font-serif text-3xl sm:text-5xl font-bold leading-tight tracking-wide text-white">
+                あなたがまだ知らない、<br />
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-purple-300 to-cyan-200">「もう一人の自分」</span>を映し出す
+            </h1>
+
+            <p class="max-w-2xl mx-auto text-slate-300 text-sm sm:text-base leading-relaxed font-light">
+                一般的な性格診断は、あなたが「自分で認識している自分（ペルソナ）」しか測定できません。<br class="hidden sm:inline" />
+                AETHER（エーテル）は、**夢の象徴（シンボル）カード選択・潜在記憶の夢診断**とAIによるリアルタイム深掘り質問を通じて、意識の検閲をすり抜け、無意識下に眠る本音・防衛機制・隠れた才能を言語化します。
+            </p>
+
+            <!-- 特徴カード -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left pt-2">
+                <div class="glass-card p-4 rounded-2xl border border-white/5">
+                    <div class="text-amber-400 text-xl mb-2"><i class="ph ph-moon-stars"></i></div>
+                    <h3 class="font-serif font-semibold text-sm text-white mb-1">1. 夢の元型シンボル＆視覚投影</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">言葉を介さない神秘的な「夢の象徴カード」の直感選択と反復夢の傾向から、無意識からのメッセージを抽出します。</p>
+                </div>
+                <div class="glass-card p-4 rounded-2xl border border-white/5">
+                    <div class="text-purple-400 text-xl mb-2"><i class="ph ph-git-branch"></i></div>
+                    <h3 class="font-serif font-semibold text-sm text-white mb-1">2. AIがリアルタイムに質問生成</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">前半の回答の矛盾や微細な兆候をAIが分析し、あなた専用の「深層質問」をその場で生成します。</p>
+                </div>
+                <div class="glass-card p-4 rounded-2xl border border-white/5">
+                    <div class="text-cyan-400 text-xl mb-2"><i class="ph ph-mask-happy"></i></div>
+                    <h3 class="font-serif font-semibold text-sm text-white mb-1">3. ペルソナと影（シャドウ）の解明</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">社会的な仮面と、無意識に抑圧している「影」のギャップから、未開拓のポテンシャルを導き出します。</p>
+                </div>
+            </div>
+
+            <!-- 開始フォーム -->
+            <div class="max-w-md mx-auto glass-card p-6 rounded-2xl gold-border-glow space-y-5 mt-6">
+                <div class="text-left">
+                    <label class="block text-xs text-slate-300 mb-2 font-medium">呼称（ニックネーム・任意）</label>
+                    <input type="text" id="user-name" placeholder="例：旅人、またはあなたの名前" class="w-full px-4 py-2.5 rounded-xl bg-abyss-950/90 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-purple-400 transition">
+                </div>
+                <div class="text-left">
+                    <label class="block text-xs text-slate-300 mb-2 font-medium">現在、最も関心がある領域</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs" id="focus-selector">
+                        <button type="button" onclick="selectFocus('自己の本質と才能')" class="focus-btn active px-3 py-2 rounded-lg bg-purple-600/30 border border-purple-400 text-purple-100 text-left flex items-center gap-2">
+                            <i class="ph ph-compass text-purple-300"></i> 自己の本質と才能
+                        </button>
+                        <button type="button" onclick="selectFocus('対人関係と愛着')" class="focus-btn px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-left flex items-center gap-2 hover:bg-white/10">
+                            <i class="ph ph-users-three text-slate-400"></i> 対人関係と距離感
+                        </button>
+                        <button type="button" onclick="selectFocus('キャリアと使命')" class="focus-btn px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-left flex items-center gap-2 hover:bg-white/10">
+                            <i class="ph ph-Briefcase text-slate-400"></i> キャリアと使命
+                        </button>
+                        <button type="button" onclick="selectFocus('生きづらさの正体')" class="focus-btn px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-left flex items-center gap-2 hover:bg-white/10">
+                            <i class="ph ph-key text-slate-400"></i> 生きづらさの正体
+                        </button>
+                    </div>
+                </div>
+                <button onclick="startAssessment()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 text-white font-serif font-semibold tracking-wider shadow-lg shadow-purple-900/40 transition flex items-center justify-center gap-2 group">
+                    <span>深層心理の扉を開く（全6問）</span>
+                    <i class="ph ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+                <p class="text-[11px] text-slate-400">※考え込まず、最初の直感（0.5秒の感覚）で選んでください。</p>
+            </div>
+        </section>
+
+        <!-- 2. 質問セッション画面 -->
+        <section id="screen-question" class="w-full max-w-2xl mx-auto hidden space-y-6">
+            <!-- プログレスバー -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center text-xs">
+                    <span id="phase-badge" class="px-2.5 py-1 rounded-md bg-purple-950 border border-purple-500/30 text-purple-300 font-medium">
+                        Phase 1: 象徴投影セッション
+                    </span>
+                    <span id="question-counter" class="text-slate-400 font-mono">Question 1 / 6</span>
+                </div>
+                <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-amber-400 transition-all duration-500" style="width: 16%"></div>
+                </div>
+            </div>
+
+            <!-- 質問カード -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
+                <!-- AIによるリアルタイム洞察バナー（後半の適応型フェーズで表示） -->
+                <div id="ai-micro-insight" class="hidden p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-xs leading-relaxed flex items-start gap-2.5">
+                    <i class="ph ph-sparkle text-amber-400 text-base shrink-0 mt-0.5"></i>
+                    <div id="ai-micro-insight-text"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div id="question-subtitle" class="text-xs text-purple-300/80 tracking-widest uppercase font-medium">心象風景の投影</div>
+                    <h2 id="question-title" class="font-serif text-xl sm:text-2xl font-semibold text-white leading-relaxed">
+                        質問テキストがここに入ります
+                    </h2>
+                </div>
+
+                <!-- 視覚的・夢の象徴（タロット）カード選択グリッド -->
+                <div id="visual-cards-container" class="hidden grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <!-- JSでSVGシンボルカードを動的に描画 -->
+                </div>
+
+                <!-- 選択肢リスト -->
+                <div id="options-container" class="space-y-3 pt-2">
+                    <!-- JSで動的に描画 -->
+                </div>
+
+                <!-- 自由記述エリア（最終問：夢の断片・無意識の言語化用） -->
+                <div id="free-text-container" class="hidden space-y-4 pt-2">
+                    <textarea id="free-text-input" rows="3" placeholder="印象に残っている夢のワンシーンや、直感的に浮かんだ言葉・イメージを自由に書いてみてください..." class="w-full p-4 rounded-xl bg-abyss-950/90 border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-amber-400 transition"></textarea>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-xs text-slate-400">夢・直感の断片ヒント:</span>
+                        <button type="button" onclick="insertHint('「知らない駅のホームや迷路のような建物をずっと探し回っている夢をよく見る」')" class="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">迷路・駅を探し回る夢</button>
+                        <button type="button" onclick="insertHint('「空を飛ぶ夢や、高い場所から静かに街を見下ろしている感覚が印象に残っている」')" class="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">空を飛ぶ・高所の夢</button>
+                        <button type="button" onclick="insertHint('「何かに追われているのに足が重くて動けない夢や、言いたいことが声にならない夢」')" class="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">足が動かない・声が出ない夢</button>
+                        <button type="button" onclick="insertHint('「本当はすべてを手放して、誰も知らない静かな海辺や森へ行ってみたい」')" class="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">すべてを手放して遠くへ行きたい</button>
+                    </div>
+                    <button onclick="submitFreeText()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-serif font-semibold tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                        <span>夢と深層心理の統合解析を開始する</span>
+                        <i class="ph ph-magic-wand"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. ローディング画面（AI生成中・深層解析中） -->
+        <section id="screen-loading" class="w-full max-w-lg mx-auto hidden text-center py-12 space-y-6">
+            <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-2 border-purple-500/30 border-t-amber-400 animate-spin"></div>
+                <div class="absolute inset-3 rounded-full border-2 border-amber-500/20 border-b-purple-400 animate-spin" style="animation-direction: reverse; animation-duration: 3s;"></div>
+                <i class="ph ph-eye text-3xl text-amber-300 animate-pulse"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 id="loading-title" class="font-serif text-xl font-semibold text-white">無意識のパターンを解析中...</h3>
+                <p id="loading-desc" class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                    あなたの選択の背後にある防衛機制と、言葉にされていない欲求の繋がりをスキャンしています。
+                </p>
+            </div>
+        </section>
+
+        <!-- 4. 診断結果画面 -->
+        <section id="screen-result" class="w-full hidden space-y-8 pb-12">
+            <!-- トップヘッダー：元型タイトルと深層名 -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 gold-border-glow relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-amber-500/10 via-purple-500/10 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">
+                    <div class="space-y-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs">
+                            <i class="ph ph-sparkle"></i>
+                            <span id="res-user-label">深層心理プロファイリング完了</span>
+                        </div>
+                        <h2 id="res-archetype-title" class="font-serif text-2xl sm:text-4xl font-bold text-white tracking-wide">
+                            静寂なる境界の観測者
+                        </h2>
+                        <p id="res-archetype-subtitle" class="text-purple-300 text-sm sm:text-base font-serif italic">
+                            ― 熱狂の渦中にありながら、心の奥底に決して凍らない湖を持つ人 ―
+                        </p>
+                    </div>
+
+                    <!-- 音声読み上げ＆アクションボタン -->
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <button id="tts-btn" onclick="playTtsBriefing()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-medium transition flex items-center gap-2">
+                            <i id="tts-icon" class="ph ph-speaker-high text-base"></i>
+                            <span id="tts-label">深層の声を聴く (AI音声)</span>
+                        </button>
+                        <button onclick="copyResultSummary()" class="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs transition flex items-center gap-1.5">
+                            <i class="ph ph-copy"></i>
+                            <span id="copy-label">結果をコピー</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1. 表の顔（ペルソナ） vs 無意識の本音（シャドウ） -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-cyan-300 font-semibold uppercase tracking-wider">
+                            <i class="ph ph-mask-happy text-base"></i>
+                            <span>自覚している自分（社会的ペルソナ）</span>
+                        </div>
+                        <p id="res-persona" class="text-sm text-slate-200 leading-relaxed">
+                            周囲の空気を敏感に読み取り、調和を乱さないように振る舞う理性的で誠実な人物。頼まれごとを断れず、自分の感情よりも「場にとっての正解」を優先しがちです。
+                        </p>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-purple-950/30 border border-purple-500/30 space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-purple-300 font-semibold uppercase tracking-wider">
+                            <i class="ph ph-moon-stars text-base"></i>
+                            <span>まだ気づいていない深層の自分（シャドウ）</span>
+                        </div>
+                        <p id="res-shadow" class="text-sm text-purple-100 leading-relaxed">
+                            表面的な協調性の裏に、実は極めて鋭い「批評眼」と「既存の枠組みを壊したい衝動」を秘めています。誰にも干渉されない絶対的な自由と、本質的なものだけを選び取る孤高の美意識を持っています。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中段：あなたが気づいていない3つの無意識特性 & レーダーチャート -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- 左カラム：まだ気づいていない3つの性格判断 (7col) -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 space-y-5">
+                    <div class="flex items-center gap-2.5 border-b border-white/10 pb-3">
+                        <i class="ph ph-keyhole text-amber-400 text-xl"></i>
+                        <h3 class="font-serif text-lg font-bold text-white">あなたがまだ気づいていない「3つの深層特性」</h3>
+                    </div>
+
+                    <div id="res-blindspots" class="space-y-4">
+                        <!-- JSで動的に挿入 -->
+                    </div>
+                </div>
+
+                <!-- 右カラム：深層心理5次元チャート & 防衛機制 (5col) -->
+                <div class="lg:col-span-5 glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                            <div class="flex items-center gap-2">
+                                <i class="ph ph-polygon text-purple-400 text-xl"></i>
+                                <h3 class="font-serif text-base font-bold text-white">無意識の5次元バランス</h3>
+                            </div>
+                        </div>
+                        <!-- SVGレーダーチャート描画コンテナ -->
+                        <div id="radar-container" class="w-full aspect-square max-w-[260px] mx-auto flex items-center justify-center"></div>
+                    </div>
+
+                    <!-- 無意識の防衛機制ボックス -->
+                    <div class="p-4 rounded-2xl bg-abyss-950/80 border border-white/10 space-y-1.5">
+                        <div class="text-xs text-amber-300 font-medium flex items-center gap-1.5">
+                            <i class="ph ph-shield-check"></i>
+                            <span>無意識の防衛機制（心の鎧）</span>
+                        </div>
+                        <p id="res-defense" class="text-xs text-slate-300 leading-relaxed">
+                            傷つくことや失望を未然に防ぐため、自分の本心を「客観的な分析」や「達観」で包み隠す傾向があります。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 夢の元型シンボル解析（新規追加：夢診断セクション） -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 gold-border-glow space-y-4 relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <i class="ph ph-moon-stars text-amber-300 text-xl"></i>
+                        <h3 class="font-serif text-lg font-bold text-white">夢の元型（アーキタイプ）と深層シンボル解読</h3>
+                    </div>
+                    <span id="res-dream-symbol-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-400/30 text-purple-200 text-xs font-serif">
+                        象徴：深海の鏡と鍵
+                    </span>
+                </div>
+                <p id="res-dream-analysis" class="text-sm text-slate-200 leading-relaxed">
+                    あなたが選んだ夢の象徴と心象風景は、現在あなたの無意識が「表面的な役割からの脱皮」を求めていることを示しています。
+                </p>
+            </div>
+
+            <!-- 下段：隠された才能（ギフト）と覚醒への処方箋 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-3 border-l-4 border-l-amber-400">
+                    <div class="flex items-center gap-2 text-amber-300 text-sm font-serif font-semibold">
+                        <i class="ph ph-diamond text-lg"></i>
+                        <span>抑圧された影に眠る「未開拓の才能」</span>
+                    </div>
+                    <p id="res-hidden-gift" class="text-sm text-slate-200 leading-relaxed"></p>
+                </div>
+
+                <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-3 border-l-4 border-l-purple-400">
+                    <div class="flex items-center gap-2 text-purple-300 text-sm font-serif font-semibold">
+                        <i class="ph ph-compass text-lg"></i>
+                        <span>自分自身を解放するための処方箋</span>
+                    </div>
+                    <p id="res-action-advice" class="text-sm text-slate-200 leading-relaxed"></p>
+                </div>
+            </div>
+
+            <!-- 深層対話チャット（自分の深層心理についてAIにさらに質問できる機能） -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 violet-border-glow space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300">
+                            <i class="ph ph-chats-circle text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-base sm:text-lg font-bold text-white">深層心理カウンセラーとの対話</h3>
+                            <p class="text-xs text-slate-400">この診断結果をもとに、恋愛・仕事・人間関係など気になったことをさらに深く質問できます</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- クイック質問チップ -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="askQuickQuestion('私の深層性格に本当に向いている仕事や環境は？')" class="text-xs px-3 py-1.5 rounded-full bg-purple-950/70 hover:bg-purple-900/70 text-purple-200 border border-purple-500/30 transition">
+                        💡 本当に向いている仕事・環境は？
+                    </button>
+                    <button onclick="askQuickQuestion('最近見た夢の意味を、私の深層性格と照らし合わせて診断して')" class="text-xs px-3 py-1.5 rounded-full bg-amber-950/70 hover:bg-amber-900/70 text-amber-200 border border-amber-500/30 transition">
+                        🌙 最近見た夢の意味を詳しく診断して
+                    </button>
+                    <button onclick="askQuickQuestion('人間関係や恋愛で無意識に繰り返してしまうパターンは？')" class="text-xs px-3 py-1.5 rounded-full bg-purple-950/70 hover:bg-purple-900/70 text-purple-200 border border-purple-500/30 transition">
+                        🤝 人間関係で陥りやすいパターンは？
+                    </button>
+                    <button onclick="askQuickQuestion('私の「シャドウ（影）」を味方につける具体的な方法は？')" class="text-xs px-3 py-1.5 rounded-full bg-purple-950/70 hover:bg-purple-900/70 text-purple-200 border border-purple-500/30 transition">
+                        ✨ 「影」を才能に変えるには？
+                    </button>
+                </div>
+
+                <!-- チャット履歴 -->
+                <div id="chat-history" class="space-y-4 max-h-80 overflow-y-auto pr-2">
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="ph ph-eye text-amber-300 text-xs"></i>
+                        </div>
+                        <div class="p-3.5 rounded-2xl rounded-tl-none bg-white/5 border border-white/10 text-xs sm:text-sm text-slate-200 leading-relaxed">
+                            あなたの無意識の扉が開かれました。診断結果の中で「なぜそうなるのか知りたい部分」や「日常のモヤモヤとの繋がり」があれば、何でも問いかけてください。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- チャット入力フォーム -->
+                <form onsubmit="handleChatSubmit(event)" class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="深層心理についてさらに詳しく聞く..." class="flex-grow px-4 py-3 rounded-xl bg-abyss-950 border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-purple-400 transition">
+                    <button type="submit" id="chat-submit-btn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition flex items-center gap-1.5 shrink-0">
+                        <span>質問する</span>
+                        <i class="ph ph-paper-plane-right"></i>
+                    </button>
+                </form>
+            </div>
+
+            <div class="text-center pt-4">
+                <button onclick="confirmReset()" class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs transition inline-flex items-center gap-2">
+                    <i class="ph ph-arrow-counter-clockwise"></i>
+                    <span>最初からもう一度診断する</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- トースト通知メッセージボックス（alert代替） -->
+    <div id="toast-box" class="fixed bottom-6 right-6 z-50 hidden transform transition-all duration-300">
+        <div class="glass-card px-4 py-3 rounded-xl border border-amber-400/40 text-amber-200 text-xs flex items-center gap-2.5 shadow-2xl">
+            <i class="ph ph-info text-base text-amber-400"></i>
+            <span id="toast-message">通知メッセージ</span>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="relative z-10 text-center py-5 text-[11px] text-slate-500 border-t border-white/5">
+        AETHER Deep Psyche Mirror — Powered by Gemini Psychometric Engine
+    </footer>
+
+    <script>
+        // ==========================================
+        // Gemini API 設定 & ユーティリティ
+        // ==========================================
+        const apiKey = "";
+        const TEXT_MODEL = "gemini-3-flash-preview";
+        const TTS_MODEL = "gemini-2.5-flash-preview-tts";
+
+        // 指数バックオフ付きAPI呼び出し
+        async function callGeminiWithRetry(url, payload, maxRetries = 3) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP status ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (err) {
+                    if (i === maxRetries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // トースト通知
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const text = document.getElementById('toast-message');
+            text.textContent = msg;
+            box.classList.remove('hidden');
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3500);
+        }
+
+        // ==========================================
+        // アプリケーション状態管理
+        // ==========================================
+        let appState = {
+            userName: "あなた",
+            focusArea: "自己の本質と才能",
+            currentQuestionIndex: 0,
+            answers: [], // { question, selectedOption, traitNote }
+            dynamicQuestions: [],
+            finalReport: null,
+            audioPlayer: null,
+            isPlayingAudio: false
+        };
+
+        // 前半4問：視覚的タロット（夢シンボル）投影 ＋ 夢診断 ＋ ユング象徴投影
+        const INITIAL_QUESTIONS = [
+            {
+                type: "visual_cards",
+                phase: "Phase 1: 夢の象徴タロット投影（非言語選択）",
+                subtitle: "無意識が共鳴する元型シンボル",
+                title: "今夜、あなたの夢の入り口に4枚の神秘的なカードが浮かんでいます。意味を考えず、最初に目が離せなくなったカードを1枚選んでください。",
+                options: [
+                    {
+                        cardTitle: "Ⅰ. 深海の月鏡 (The Abyssal Mirror)",
+                        text: "静まり返った夜の海と、水面下に沈むもう一つの満月",
+                        note: "深層意識への高い親和性・感情の秘匿・表面的な言葉への不信と本質への渇望",
+                        svg: `<svg viewBox="0 0 120 120" class="w-20 h-20 mx-auto"><circle cx="60" cy="36" r="16" fill="none" stroke="#fbbf24" stroke-width="2"/><path d="M 15 65 Q 60 55 105 65" stroke="#8b5cf6" stroke-width="1.5" fill="none"/><path d="M 25 78 Q 60 70 95 78" stroke="#6366f1" stroke-width="1" stroke-dasharray="3 3" fill="none"/><circle cx="60" cy="92" r="12" fill="rgba(251,191,36,0.2)" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="2 2"/></svg>`
+                    },
+                    {
+                        cardTitle: "Ⅱ. 焔の鳥と黄金の檻 (The Caged Phoenix)",
+                        text: "扉が開いているのに、美しい黄金の鳥籠の中に留まる発光する鳥",
+                        note: "自己制限と安全領域への執着・本当は飛び立ちたい強烈な変革衝動の抑圧",
+                        svg: `<svg viewBox="0 0 120 120" class="w-20 h-20 mx-auto"><path d="M 35 95 L 35 45 A 25 25 0 0 1 85 45 L 85 95 Z" fill="none" stroke="#94a3b8" stroke-width="1.5"/><line x1="60" y1="20" x2="60" y2="95" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 4"/><path d="M 45 65 Q 60 40 75 65 Q 60 58 45 65 Z" fill="#f59e0b"/><circle cx="60" cy="52" r="4" fill="#fef08a"/></svg>`
+                    },
+                    {
+                        cardTitle: "Ⅲ. 霧幻の螺旋階段 (The Astral Staircase)",
+                        text: "雲の上へと果てしなく続く、重力のない白い石の階段と鍵穴",
+                        note: "高い理想と完璧主義・現実世界への微かな疎外感・未知の真理や精神性への探求",
+                        svg: `<svg viewBox="0 0 120 120" class="w-20 h-20 mx-auto"><path d="M 25 90 L 45 90 L 45 72 L 65 72 L 65 54 L 85 54 L 85 36 L 100 36" fill="none" stroke="#c084fc" stroke-width="2.5"/><circle cx="45" cy="38" r="10" fill="none" stroke="#fbbf24" stroke-width="1.5"/><path d="M 43 38 L 47 38 L 49 48 L 41 48 Z" fill="#fbbf24"/></svg>`
+                    },
+                    {
+                        cardTitle: "Ⅳ. 砂時計と双子の仮面 (The Twin Eclipse)",
+                        text: "星砂が逆流する砂時計と、光と影に分かれた2つの仮面",
+                        note: "表の顔（ペルソナ）と本音（シャドウ）の強い二面性・時間の制約や義務からの解放欲求",
+                        svg: `<svg viewBox="0 0 120 120" class="w-20 h-20 mx-auto"><polygon points="35,25 85,25 60,60" fill="none" stroke="#38bdf8" stroke-width="1.8"/><polygon points="60,60 35,95 85,95" fill="rgba(56,189,248,0.15)" stroke="#38bdf8" stroke-width="1.8"/><circle cx="60" cy="60" r="4" fill="#fbbf24"/><circle cx="32" cy="60" r="10" fill="none" stroke="#e2e8f0" stroke-width="1.2"/><circle cx="88" cy="60" r="10" fill="rgba(139,92,246,0.3)" stroke="#a855f7" stroke-width="1.2"/></svg>`
+                    }
+                ]
+            },
+            {
+                type: "standard",
+                phase: "Phase 1: 夢の深層記憶プローブ",
+                subtitle: "反復夢と無意識のメッセージ",
+                title: "あなたがこれまで見た夢の中で、不思議と記憶に残っている感覚や、繰り返し現れやすい「夢のパターン」に最も近いものはどれですか？",
+                options: [
+                    { text: "知らない街や巨大な建物・駅の中で、どこかへ行こうと探し回っている夢", note: "人生における本来の居場所や使命の模索・現状の役割に対する無意識の違和感" },
+                    { text: "空を浮遊して飛ぶ夢、または高い場所から静かに下界を見下ろしている夢", note: "日常のしがらみを超越したい欲求・高い俯瞰力と精神的な自由への渇望" },
+                    { text: "何かに追われているのに足が重くて走れない、または声を出そうとしても出ない夢", note: "日常での過度な自己抑制・「本当は言いたいこと・やりたいこと」を我慢している葛藤" },
+                    { text: "懐かしい人物や見知らぬ誰かと、言葉を超えた不思議な会話を交わしている夢", note: "魂レベルでの深い共鳴への渇望・表層的な人間関係では満たされない孤独と感受性" }
+                ]
+            },
+            {
+                type: "standard",
+                phase: "Phase 1: 象徴投影セッション",
+                subtitle: "抑圧されたシャドウ（影）の投影",
+                title: "あなたが日常で「なぜか分からないけれど、どうしても苦手だと感じる人」や「見ていてザワつく振る舞い」に最も近いものはどれですか？",
+                options: [
+                    { text: "周囲の空気を一切読まず、自分の欲望や感情をストレートにぶつける人", note: "自身の感情表現の抑圧・「わがまま」への強い禁忌" },
+                    { text: "根拠のない自信に満ち溢れ、細部を気にせず中心に立とうとする人", note: "完璧主義による自己制限・承認欲求の抑圧" },
+                    { text: "誰に対してもすぐに弱みを見せ、躊躇なく人に甘えて頼り切る人", note: "過剰な自立心・「弱さを見せること」への恐怖" },
+                    { text: "ひとつの場所に縛られず、約束や責任を軽やかに手放して去っていく人", note: "義務感への過剰適応・自由への潜在的な渇望" }
+                ]
+            },
+            {
+                type: "standard",
+                phase: "Phase 1: 象徴投影セッション",
+                subtitle: "内的葛藤とエネルギーの源泉",
+                title: "もし「今日から1年間、誰からの評価も批判も存在しない透明な世界」で暮らせるとしたら、あなたの心はどう変化すると思いますか？",
+                options: [
+                    { text: "これまで「やるべき」と思い込んでいた目標への関心が急に消え、深い安堵に包まれる", note: "他者基準の目標設定・過剰な役割意識からの疲労" },
+                    { text: "誰の目も気にせず、ずっと温めていた風変わりな創作や研究に没頭し始める", note: "秘められた独創性・羞恥心や批判への警戒による抑制" },
+                    { text: "手応えや張り合いを失ってしまい、自分が何者なのか分からなくなる不安を覚える", note: "鏡としての他者の必要性・関係性の中で輝く本質" },
+                    { text: "今とほとんど変わらず、自分の決めたルーティンや美意識を淡々と守り続ける", note: "強固な内的規律・孤高の自律性" }
+                ]
+            }
+        ];
+
+        // フォールバック用の後半質問（通信エラー時でも止まらないための安全設計）
+        const FALLBACK_DYNAMIC_QUESTIONS = [
+            {
+                phase: "Phase 2: AI適応型・深層プローブ",
+                subtitle: "防衛機制の裏にある本音",
+                microInsight: "前半の選択から、あなたは「周囲との調和や理性」を保ちながらも、内心では「誰にも踏み込まれたくない聖域」を強く守っている兆候が見えます。",
+                title: "親しい人から「あなたのことを本当に理解したい」と真っ直ぐに言われたとき、あなたの心の奥底で最初に動く微細な感覚はどれですか？",
+                options: [
+                    { text: "嬉しさよりも先に、「本当の自分を知られたら幻滅されるかもしれない」と身構えてしまう", note: "自己開示への恐れ・理想像の維持" },
+                    { text: "「言葉にした瞬間に、自分の大切な感覚が安っぽくなってしまう」と感じて微笑んでかわす", note: "内的世界の神聖視・言語化への不信" },
+                    { text: "自分自身でも「本当の自分が何なのか分からない」ため、どう答えていいか戸惑う", note: "自己感覚の乖離・他者優先による自己喪失" },
+                    { text: "相手の言葉の裏にある意図や、相手が自分に何を求めているのかを冷静に観察してしまう", note: "知性化による防衛・感情からの退避" }
+                ]
+            },
+            {
+                phase: "Phase 2: AI適応型・深層プローブ",
+                subtitle: "無意識が求める解放",
+                microInsight: "あなたは普段、感情の揺れを「理性的な解釈」で綺麗に整理する癖があるようです。では、その理性の蓋が外れる瞬間を探ります。",
+                title: "夢の中で、あなたは長年背負っていた「重たい荷物」を深い海へと投げ捨てました。その箱の中に入っていたのは何だと思いますか？",
+                options: [
+                    { text: "「いつもちゃんとしていなければならない」という、自分自身に課したルールブック", note: "超自我の厳格さ・解放への渇望" },
+                    { text: "過去に言えなかった「本当は嫌だった」「傷ついた」という未消化の言葉たち", note: "抑圧された怒りや悲しみ・自己主張の封印" },
+                    { text: "周囲から期待された「優しくて有能な自分」を演じるための精巧な仮面", note: "ペルソナへの過剰同化・本来の野生の喪失" },
+                    { text: "まだ開けられていないのに、開けるのが怖くて封印していた「自分の本当の野心」", note: "成功への恐れ・自己実現へのアンビバレンス" }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // UI操作 & フロー制御
+        // ==========================================
+        function selectFocus(focusText) {
+            appState.focusArea = focusText;
+            const buttons = document.querySelectorAll('.focus-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(focusText.substring(0, 4))) {
+                    btn.className = "focus-btn active px-3 py-2 rounded-lg bg-purple-600/30 border border-purple-400 text-purple-100 text-left flex items-center gap-2";
+                } else {
+                    btn.className = "focus-btn px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-left flex items-center gap-2 hover:bg-white/10";
+                }
+            });
+        }
+
+        function switchScreen(screenId) {
+            ['screen-intro', 'screen-question', 'screen-loading', 'screen-result'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startAssessment() {
+            const nameInput = document.getElementById('user-name').value.trim();
+            appState.userName = nameInput || "あなた";
+            appState.currentQuestionIndex = 0;
+            appState.answers = [];
+            appState.dynamicQuestions = [];
+
+            switchScreen('screen-question');
+            renderCurrentQuestion();
+        }
+
+        function renderCurrentQuestion() {
+            const idx = appState.currentQuestionIndex;
+            const totalQuestions = 7;
+            const progressPercent = Math.round(((idx + 1) / totalQuestions) * 100);
+
+            document.getElementById('question-counter').textContent = `Question ${idx + 1} / ${totalQuestions}`;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            const visualCardsContainer = document.getElementById('visual-cards-container');
+            const optionsContainer = document.getElementById('options-container');
+            const freeTextContainer = document.getElementById('free-text-container');
+            const microInsightBox = document.getElementById('ai-micro-insight');
+
+            // 第1〜4問：初期投影質問（タロット夢カード＋夢パターン＋象徴投影）
+            if (idx < 4) {
+                const q = INITIAL_QUESTIONS[idx];
+                document.getElementById('phase-badge').textContent = q.phase;
+                document.getElementById('question-subtitle').textContent = q.subtitle;
+                document.getElementById('question-title').textContent = q.title;
+                microInsightBox.classList.add('hidden');
+                freeTextContainer.classList.add('hidden');
+
+                if (q.type === 'visual_cards') {
+                    optionsContainer.classList.add('hidden');
+                    visualCardsContainer.classList.remove('hidden');
+                    visualCardsContainer.classList.add('grid');
+                    visualCardsContainer.innerHTML = q.options.map((opt, optIdx) => `
+                        <button onclick="handleOptionSelect(${optIdx})" class="option-btn p-5 rounded-2xl bg-abyss-900/90 border border-white/10 hover:border-amber-400/60 text-center flex flex-col items-center justify-between gap-3 group relative overflow-hidden">
+                            <div class="w-full py-2 rounded-xl bg-white/[0.02] border border-white/5 group-hover:bg-purple-950/30 transition">
+                                ${opt.svg}
+                            </div>
+                            <div class="space-y-1">
+                                <div class="font-serif text-sm font-bold text-amber-200 group-hover:text-amber-300">${opt.cardTitle}</div>
+                                <div class="text-xs text-slate-300 leading-relaxed">${opt.text}</div>
+                            </div>
+                        </button>
+                    `).join('');
+                } else {
+                    visualCardsContainer.classList.add('hidden');
+                    visualCardsContainer.classList.remove('grid');
+                    optionsContainer.classList.remove('hidden');
+                    optionsContainer.innerHTML = q.options.map((opt, optIdx) => `
+                        <button onclick="handleOptionSelect(${optIdx})" class="option-btn w-full p-4 rounded-2xl bg-white/[0.04] border border-white/10 text-left flex items-start gap-3.5 group">
+                            <span class="w-6 h-6 rounded-full bg-purple-950 border border-purple-400/40 text-purple-300 text-xs flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-purple-500 group-hover:text-white transition">
+                                ${String.fromCharCode(65 + optIdx)}
+                            </span>
+                            <span class="text-sm sm:text-base text-slate-200 group-hover:text-white leading-relaxed">${opt.text}</span>
+                        </button>
+                    `).join('');
+                }
+            }
+            // 第5〜6問：AIがリアルタイム生成した深掘り質問（夢の要素も反映）
+            else if (idx === 4 || idx === 5) {
+                const dq = appState.dynamicQuestions[idx - 4];
+                document.getElementById('phase-badge').textContent = "Phase 2: AI適応型・夢と無意識の深掘り";
+                document.getElementById('question-subtitle').textContent = dq.subtitle || "無意識の矛盾と防衛機制の探求";
+                document.getElementById('question-title').textContent = dq.title;
+
+                if (dq.microInsight) {
+                    microInsightBox.classList.remove('hidden');
+                    document.getElementById('ai-micro-insight-text').textContent = dq.microInsight;
+                } else {
+                    microInsightBox.classList.add('hidden');
+                }
+
+                visualCardsContainer.classList.add('hidden');
+                visualCardsContainer.classList.remove('grid');
+                optionsContainer.classList.remove('hidden');
+                freeTextContainer.classList.add('hidden');
+
+                optionsContainer.innerHTML = dq.options.map((opt, optIdx) => `
+                    <button onclick="handleOptionSelect(${optIdx})" class="option-btn w-full p-4 rounded-2xl bg-white/[0.04] border border-white/10 text-left flex items-start gap-3.5 group">
+                        <span class="w-6 h-6 rounded-full bg-amber-950 border border-amber-400/40 text-amber-300 text-xs flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-amber-500 group-hover:text-black transition">
+                            ${String.fromCharCode(65 + optIdx)}
+                        </span>
+                        <span class="text-sm sm:text-base text-slate-200 group-hover:text-white leading-relaxed">${opt.text}</span>
+                    </button>
+                `).join('');
+            }
+            // 第7問：最終投影（最近の夢の断片・またはもう一人の自分からのメッセージ）
+            else if (idx === 6) {
+                document.getElementById('phase-badge').textContent = "Final Phase: 夢と無意識の言語化";
+                document.getElementById('question-subtitle').textContent = "夢の断片・深層からのメッセージ";
+                document.getElementById('question-title').textContent = "最後に、「最近見た印象的な夢のワンシーン」や「夢の中でよく感じる感情」、あるいは「もう一人の自分が今あなたに囁いている言葉」を直感のままに教えてください。";
+                microInsightBox.classList.remove('hidden');
+                document.getElementById('ai-micro-insight-text').textContent = "ここまでの6つの選択（夢の象徴カード・反復夢パターン・深層プローブ）から、あなたの表層のペルソナと深層のシャドウの輪郭が浮かび上がりました。最後の直感的な言葉で、夢と無意識の解析を完成させます。";
+
+                visualCardsContainer.classList.add('hidden');
+                visualCardsContainer.classList.remove('grid');
+                optionsContainer.classList.add('hidden');
+                freeTextContainer.classList.remove('hidden');
+                document.getElementById('free-text-input').value = "";
+            }
+        }
+
+        async function handleOptionSelect(optIdx) {
+            const idx = appState.currentQuestionIndex;
+            let currentQ;
+            if (idx < 4) {
+                currentQ = INITIAL_QUESTIONS[idx];
+            } else {
+                currentQ = appState.dynamicQuestions[idx - 4];
+            }
+
+            const chosen = currentQ.options[optIdx];
+            appState.answers.push({
+                question: currentQ.title,
+                selectedOption: chosen.cardTitle ? `${chosen.cardTitle}（${chosen.text}）` : chosen.text,
+                traitNote: chosen.note || ""
+            });
+
+            // 第4問回答完了時に、Gemini APIを使ってその人専用の「第5問・第6問」を動的生成する
+            if (idx === 3) {
+                await generateAdaptiveQuestions();
+                appState.currentQuestionIndex++;
+                switchScreen('screen-question');
+                renderCurrentQuestion();
+            } else {
+                appState.currentQuestionIndex++;
+                renderCurrentQuestion();
+            }
+        }
+
+        function insertHint(text) {
+            document.getElementById('free-text-input').value = text;
+        }
+
+        async function submitFreeText() {
+            const val = document.getElementById('free-text-input').value.trim() || "（言葉にならない静かな感覚）";
+            appState.answers.push({
+                question: "もう一人の自分からの囁き（自由連想）",
+                selectedOption: val,
+                traitNote: "直感的な自己投影メッセージ"
+            });
+
+            await generateFinalAnalysis();
+        }
+
+        // ==========================================
+        // AIによる適応型深掘り質問の生成 (Phase 2)
+        // ==========================================
+        async function generateAdaptiveQuestions() {
+            switchScreen('screen-loading');
+            document.getElementById('loading-title').textContent = "前半の回答から無意識の兆候を検出中...";
+            document.getElementById('loading-desc').textContent = "あなたの選択パターンに隠された「防衛機制」と「抑圧された欲求」を分析し、あなた専用の深層質問を生成しています。";
+
+            const historyText = appState.answers.map((a, i) => `Q${i+1}: ${a.question}\n選択: ${a.selectedOption} (心理的示唆: ${a.traitNote})`).join("\n\n");
+
+            const systemPrompt = `あなたはユング心理学（元型・夢分析・シャドウ）に精通した熟練のAIプロファイラーです。
+ユーザーが選んだ「夢の象徴タロットカード」「反復夢のパターン」および前半の回答傾向を分析し、その人が「自分でも気づいていない本音・防衛機制・無意識の葛藤」をさらに鋭く浮き彫りにするための深掘り質問を2問作成してください。
+そのうち少なくとも1問は「夢の中のシチュエーション」や「象徴的な心象風景」を用いた質問にしてください。`;
+
+            const userQuery = `ユーザーの関心領域: ${appState.focusArea}
+これまでの回答履歴:
+${historyText}
+
+上記の傾向を踏まえ、第5問と第6問を生成してください。`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                subtitle: { type: "STRING", description: "短いテーマ名（例：親密さと距離のジレンマ）" },
+                                microInsight: { type: "STRING", description: "これまでの回答から見抜いた、ユーザーへの1〜2文の鋭い中間フィードバック（「あなたは〜という傾向があるようです」など）" },
+                                title: { type: "STRING", description: "深層心理を探る質問文" },
+                                options: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            text: { type: "STRING", description: "選択肢の文章" },
+                                            note: { type: "STRING", description: "この選択肢が示す深層心理メモ" }
+                                        },
+                                        required: ["text", "note"]
+                                    }
+                                }
+                            },
+                            required: ["subtitle", "microInsight", "title", "options"]
+                        }
+                    }
+                }
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${apiKey}`;
+                const result = await callGeminiWithRetry(apiUrl, payload);
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsed = JSON.parse(rawJson);
+                if (Array.isArray(parsed) && parsed.length >= 2) {
+                    appState.dynamicQuestions = parsed.slice(0, 2);
+                } else {
+                    appState.dynamicQuestions = FALLBACK_DYNAMIC_QUESTIONS;
+                }
+            } catch (e) {
+                appState.dynamicQuestions = FALLBACK_DYNAMIC_QUESTIONS;
+            }
+        }
+
+        // ==========================================
+        // AIによる最終・深層性格診断レポートの生成
+        // ==========================================
+        async function generateFinalAnalysis() {
+            switchScreen('screen-loading');
+            document.getElementById('loading-title').textContent = "深層心理の鏡像レポートを構築中...";
+            document.getElementById('loading-desc').textContent = "表層のペルソナと無意識のシャドウのギャップを解析し、あなたがまだ自覚していない性格特性を言語化しています。";
+
+            const historyText = appState.answers.map((a, i) => `Q${i+1}: ${a.question}\n回答: ${a.selectedOption}\n示唆: ${a.traitNote}`).join("\n\n");
+
+            const systemPrompt = `あなたはユング心理学（ペルソナ、シャドウ、元型）および現代の深層心理学に精通した最高峰の心理プロファイラーです。
+ユーザーの6つの回答から、本人が「自分で思っている性格」ではなく、「本人がまだ気づいていない深層性格・無意識の欲求・心の防衛機制・隠れた才能」を鋭く、かつ温かみと詩的な気品のある日本語で診断してください。
+バーナム効果のような誰にでも当てはまる曖昧な表現を避け、回答の矛盾や象徴的な選択の繋がりから踏み込んだ洞察を提示してください。`;
+
+            const userQuery = `対象者名: ${appState.userName}
+現在の関心テーマ: ${appState.focusArea}
+
+【全6問の回答データ】
+${historyText}
+
+上記のデータに基づき、深層心理プロファイリング結果をJSON形式で出力してください。`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            archetypeTitle: { type: "STRING", description: "深層元型の二つ名（例：静寂なる境界の錬金術師、熱量を秘めた孤高の観測者 など）" },
+                            archetypeSubtitle: { type: "STRING", description: "その本質を表す詩的なサブタイトル" },
+                            persona: { type: "STRING", description: "普段周囲に見せている、または自分で自覚している表向きの性格（約100〜140字）" },
+                            shadow: { type: "STRING", description: "無意識下に抑圧している、まだ気づいていない本当の性格・欲求（約120〜160字）" },
+                            blindSpots: {
+                                type: "ARRAY",
+                                description: "本人がまだ気づいていない3つの深層性格判断",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        title: { type: "STRING", description: "深層特性のタイトル（例：『優しさ』の仮面を被った圧倒的な独立心）" },
+                                        description: { type: "STRING", description: "なぜそう言えるのか、日常でどう現れているかの深い解説（約100〜140字）" }
+                                    },
+                                    required: ["title", "description"]
+                                }
+                            },
+                            defenseMechanism: { type: "STRING", description: "心を守るために無意識に使っている防衛機制とその理由（約80〜120字）" },
+                            dreamSymbolName: { type: "STRING", description: "ユーザーの夢と深層心理を象徴するシンボル名（例：深海の月鏡と未完の螺旋階段）" },
+                            dreamInterpretation: { type: "STRING", description: "選んだ夢のカードや夢の傾向から読み解く、今無意識が伝えようとしている夢診断メッセージ（約140〜180字）" },
+                            hiddenGift: { type: "STRING", description: "シャドウ（影）を受け入れたときに開花する、まだ使われていない本当の才能（約100〜140字）" },
+                            actionAdvice: { type: "STRING", description: "今日からできる、無意識の自分を解放するための具体的な処方箋（約100〜140字）" },
+                            voiceScript: { type: "STRING", description: "AI音声でユーザーに直接語りかけるための、心に響く短いメッセージ（約120〜160字）" },
+                            dimensions: {
+                                type: "OBJECT",
+                                description: "深層心理の5次元スコア（各20〜98の整数）",
+                                properties: {
+                                    intuition: { type: "INTEGER", description: "深層直感力（論理を超えた本質察知）" },
+                                    shadowEnergy: { type: "INTEGER", description: "潜在的変革欲求（現状を打破する隠れた熱量）" },
+                                    boundary: { type: "INTEGER", description: "精神的聖域（誰にも侵されない自律性）" },
+                                    empathyDepth: { type: "INTEGER", description: "無意識的共鳴（言葉の裏を汲み取る感受性）" },
+                                    creativity: { type: "INTEGER", description: "混沌の創造性（未知や矛盾を楽しむ力）" }
+                                },
+                                required: ["intuition", "shadowEnergy", "boundary", "empathyDepth", "creativity"]
+                            }
+                        },
+                        required: [
+                            "archetypeTitle", "archetypeSubtitle", "persona", "shadow",
+                            "blindSpots", "defenseMechanism", "dreamSymbolName", "dreamInterpretation",
+                            "hiddenGift", "actionAdvice", "voiceScript", "dimensions"
+                        ]
+                    }
+                }
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${apiKey}`;
+                const result = await callGeminiWithRetry(apiUrl, payload);
+                const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const parsed = JSON.parse(rawJson);
+                appState.finalReport = parsed;
+                renderReport(parsed);
+            } catch (e) {
+                loadSampleReport(true);
+            }
+        }
+
+        // ==========================================
+        // 診断結果の描画とSVGレーダーチャート
+        // ==========================================
+        function renderReport(report) {
+            switchScreen('screen-result');
+
+            document.getElementById('res-user-label').textContent = `${appState.userName}の深層心理プロファイリング結果（テーマ：${appState.focusArea}）`;
+            document.getElementById('res-archetype-title').textContent = report.archetypeTitle;
+            document.getElementById('res-archetype-subtitle').textContent = `― ${report.archetypeSubtitle} ―`;
+            document.getElementById('res-persona').textContent = report.persona;
+            document.getElementById('res-shadow').textContent = report.shadow;
+            document.getElementById('res-defense').textContent = report.defenseMechanism;
+            document.getElementById('res-dream-symbol-badge').textContent = `象徴：${report.dreamSymbolName || '深海の月鏡と鍵'}`;
+            document.getElementById('res-dream-analysis').textContent = report.dreamInterpretation || 'あなたが惹かれた夢の象徴は、表面的な日常の役割を超え、まだ表現されていない本来の創造性と自由を取り戻そうとする無意識からのサインです。';
+            document.getElementById('res-hidden-gift').textContent = report.hiddenGift;
+            document.getElementById('res-action-advice').textContent = report.actionAdvice;
+
+            const blindspotsEl = document.getElementById('res-blindspots');
+            blindspotsEl.innerHTML = (report.blindSpots || []).map((b, idx) => `
+                <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-1.5 hover:border-amber-400/30 transition">
+                    <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 text-xs font-mono flex items-center justify-center shrink-0">${idx + 1}</span>
+                        <h4 class="font-serif font-semibold text-sm sm:text-base text-amber-100">${b.title}</h4>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed pl-7">${b.description}</p>
+                </div>
+            `).join('');
+
+            renderRadarChart(report.dimensions || {
+                intuition: 88,
+                shadowEnergy: 82,
+                boundary: 91,
+                empathyDepth: 79,
+                creativity: 85
+            });
+        }
+
+        function renderRadarChart(dims) {
+            const labels = [
+                { key: 'intuition', name: '深層直感力' },
+                { key: 'shadowEnergy', name: '潜在的変革熱量' },
+                { key: 'boundary', name: '精神的聖域' },
+                { key: 'empathyDepth', name: '無意識的共鳴' },
+                { key: 'creativity', name: '混沌の創造性' }
+            ];
+
+            const size = 250;
+            const center = size / 2;
+            const radius = 85;
+            const angleStep = (Math.PI * 2) / labels.length;
+
+            // グリッド生成
+            let gridPolygons = '';
+            [0.25, 0.5, 0.75, 1].forEach(level => {
+                const pts = labels.map((_, i) => {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const r = radius * level;
+                    return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
+                }).join(' ');
+                gridPolygons += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" />`;
+            });
+
+            // 軸線とラベル生成
+            let axesAndLabels = '';
+            labels.forEach((item, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const x2 = center + radius * Math.cos(angle);
+                const y2 = center + radius * Math.sin(angle);
+
+                const labelR = radius + 26;
+                const lx = center + labelR * Math.cos(angle);
+                const ly = center + labelR * Math.sin(angle);
+                const val = dims[item.key] || 75;
+
+                axesAndLabels += `
+                    <line x1="${center}" y1="${center}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+                    <text x="${lx}" y="${ly}" fill="#cbd5e1" font-size="10" text-anchor="middle" dominant-baseline="middle">${item.name}</text>
+                    <text x="${lx}" y="${ly + 12}" fill="#f59e0b" font-size="10" font-weight="bold" text-anchor="middle" dominant-baseline="middle">${val}%</text>
+                `;
+            });
+
+            // データポリゴン
+            const dataPoints = labels.map((item, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const val = Math.min(100, Math.max(20, dims[item.key] || 75));
+                const r = radius * (val / 100);
+                return `${center + r * Math.cos(angle)},${center + r * Math.sin(angle)}`;
+            }).join(' ');
+
+            const dots = labels.map((item, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const val = Math.min(100, Math.max(20, dims[item.key] || 75));
+                const r = radius * (val / 100);
+                return `<circle cx="${center + r * Math.cos(angle)}" cy="${center + r * Math.sin(angle)}" r="3.5" fill="#fbbf24" stroke="#05050a" stroke-width="1.5" />`;
+            }).join('');
+
+            document.getElementById('radar-container').innerHTML = `
+                <svg viewBox="0 0 ${size} ${size}" class="w-full h-full overflow-visible">
+                    ${gridPolygons}
+                    ${axesAndLabels}
+                    <polygon points="${dataPoints}" fill="rgba(139, 92, 246, 0.28)" stroke="#a855f7" stroke-width="2" />
+                    ${dots}
+                </svg>
+            `;
+        }
+
+        // ==========================================
+        // Gemini TTS (AI音声で深層の声を聴く機能)
+        // ==========================================
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, pcm16.length * 2, true);
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(44 + i * 2, pcm16[i], true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function playTtsBriefing() {
+            if (!appState.finalReport) return;
+
+            const btnLabel = document.getElementById('tts-label');
+            const btnIcon = document.getElementById('tts-icon');
+
+            if (appState.isPlayingAudio && appState.audioPlayer) {
+                appState.audioPlayer.pause();
+                appState.isPlayingAudio = false;
+                btnLabel.textContent = "深層の声を聴く (AI音声)";
+                btnIcon.className = "ph ph-speaker-high text-base";
+                return;
+            }
+
+            btnLabel.textContent = "音声を生成中...";
+            btnIcon.className = "ph ph-spinner animate-spin text-base";
+
+            const scriptText = appState.finalReport.voiceScript || `${appState.finalReport.archetypeTitle}。${appState.finalReport.shadow}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: `静かで神秘的、かつ深く包み込むような優しいトーンで語りかけてください: ${scriptText}` }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Aoede" }
+                        }
+                    }
+                },
+                model: TTS_MODEL
+            };
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${apiKey}`;
+                const result = await callGeminiWithRetry(apiUrl, payload);
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || "audio/L16;rate=24000";
+
+                if (audioData) {
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+                    const pcmBuffer = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmBuffer);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    appState.audioPlayer = new Audio(audioUrl);
+                    appState.isPlayingAudio = true;
+                    btnLabel.textContent = "再生中（クリックで停止）";
+                    btnIcon.className = "ph ph-stop-circle text-base text-amber-400";
+
+                    appState.audioPlayer.onended = () => {
+                        appState.isPlayingAudio = false;
+                        btnLabel.textContent = "深層の声を聴く (AI音声)";
+                        btnIcon.className = "ph ph-speaker-high text-base";
+                    };
+                    appState.audioPlayer.play();
+                } else {
+                    throw new Error("No audio data");
+                }
+            } catch (e) {
+                btnLabel.textContent = "深層の声を聴く (AI音声)";
+                btnIcon.className = "ph ph-speaker-high text-base";
+                showToast("現在音声サーバーが混雑しています。しばらくしてからお試しください。");
+            }
+        }
+
+        // ==========================================
+        // 深層心理カウンセラーとの追加対話機能
+        // ==========================================
+        function askQuickQuestion(qText) {
+            document.getElementById('chat-input').value = qText;
+            handleChatSubmit(new Event('submit'));
+        }
+
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('chat-input');
+            const question = inputEl.value.trim();
+            if (!question || !appState.finalReport) return;
+
+            inputEl.value = "";
+            const historyEl = document.getElementById('chat-history');
+
+            // ユーザーの吹き出し追加
+            historyEl.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-end">
+                    <div class="p-3.5 rounded-2xl rounded-tr-none bg-purple-600/30 border border-purple-400/30 text-xs sm:text-sm text-white max-w-[85%] leading-relaxed">
+                        ${escapeHtml(question)}
+                    </div>
+                </div>
+            `);
+
+            // ローディング吹き出し
+            const loadingId = 'chat-loading-' + Date.now();
+            historyEl.insertAdjacentHTML('beforeend', `
+                <div id="${loadingId}" class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-spinner animate-spin text-amber-300 text-xs"></i>
+                    </div>
+                    <div class="p-3.5 rounded-2xl rounded-tl-none bg-white/5 border border-white/10 text-xs text-slate-400">
+                        深層プロファイルと照合して分析しています...
+                    </div>
+                </div>
+            `);
+            historyEl.scrollTop = historyEl.scrollHeight;
+
+            const systemPrompt = `あなたは深層心理カウンセラー「AETHER」です。
+以下のユーザーの深層心理プロファイリング結果に基づき、ユーザーの追加の質問に対して、本人がハッとするような深い心理的洞察と具体的なアドバイスを200〜300字程度で回答してください。
+
+【ユーザーの診断結果】
+- 元型: ${appState.finalReport.archetypeTitle}
+- 表層のペルソナ: ${appState.finalReport.persona}
+- 無意識のシャドウ: ${appState.finalReport.shadow}
+- 防衛機制: ${appState.finalReport.defenseMechanism}
+- 隠れた才能: ${appState.finalReport.hiddenGift}`;
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${apiKey}`;
+                const result = await callGeminiWithRetry(apiUrl, {
+                    contents: [{ parts: [{ text: question }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                }, 1);
+                const reply = result?.candidates?.[0]?.content?.parts?.[0]?.text || generateLocalCounselorReply(question);
+                document.getElementById(loadingId)?.remove();
+
+                historyEl.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="ph ph-eye text-amber-300 text-xs"></i>
+                        </div>
+                        <div class="p-3.5 rounded-2xl rounded-tl-none bg-white/5 border border-white/10 text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
+                            ${escapeHtml(reply)}
+                        </div>
+                    </div>
+                `);
+                historyEl.scrollTop = historyEl.scrollHeight;
+            } catch (err) {
+                document.getElementById(loadingId)?.remove();
+                showToast("応答の取得に失敗しました。もう一度お試しください。");
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+
+        // ==========================================
+        // サンプル診断結果の即時プレビュー & コピー機能
+        // ==========================================
+        function loadSampleReport(isFallback = false) {
+            const sample = {
+                archetypeTitle: "静寂なる境界の錬金術師",
+                archetypeSubtitle: "穏やかな微笑みの奥で、世界の矛盾を誰よりも鋭く見抜く孤高の知性",
+                persona: "周囲からは「落ち着いていて聞き上手、波風を立てない協調性の高い人」と見られています。自分自身でも、争いを好まずバランスを重視する穏健な性格だと認識しているはずです。",
+                shadow: "その穏やかさの裏には、実は「既存の浅いルールや形骸化した人間関係に対する強い退屈と反骨心」が眠っています。誰にも干渉されない絶対的な聖域で、自分の美意識だけを貫き通したいという強烈な独立心と情熱を無意識に抑え込んでいます。",
+                blindSpots: [
+                    {
+                        title: "「優しさ」の正体は、他者に踏み込ませないための精巧な防壁",
+                        description: "あなたが人に優しく合わせるのは、単なる親切心だけでなく「自分の本音や聖域に土足で踏み込まれないための最もスマートな距離の取り方」として無意識に機能しています。"
+                    },
+                    {
+                        title: "「自信がない」のではなく、「自分の基準が極端に高い」だけ",
+                        description: "自分を控えめに評価しがちですが、深層心理では「中途半端なものを世に出したくない」という極めて高い審美眼とプライドが存在し、それが行動のブレーキになっています。"
+                    },
+                    {
+                        title: "調和を守る役割に飽きており、実は「創造的な破壊」を望んでいる",
+                        description: "予定調和な日常や無難な会話に密かな窒息感を覚えています。あなたの無意識は、すべてをリセットして誰も見たことがない表現や企画に没頭するスリルを求めています。"
+                    }
+                ],
+                defenseMechanism: "「知性化と俯瞰」：傷つくことや失望を避けるため、感情が揺さぶられる場面でも瞬時に一歩引いて「観察者」の視点に立ち、出来事を冷静に分析することで心を守っています。",
+                dreamSymbolName: "深海の月鏡と開かれた黄金の檻",
+                dreamInterpretation: "あなたが直感で惹かれた夢の象徴と、目的地を探し回る・高い場所から見下ろす夢の記憶は、無意識が「今の環境や役割があなたの本来の器に対して窮屈になっていること」を知らせるサインです。鳥籠の扉はすでに開いており、あなた自身が『もう遠慮せずに外の世界へ出ていい』と許可を出す瞬間を待っています。",
+                hiddenGift: "全く異なる概念や、周囲が見落としている微細な違和感を繋ぎ合わせて「新しい価値や世界観」へと昇華させる独自のコンセプトメイク力と本質看破力。",
+                actionAdvice: "「周囲にとっての正解」を1日1回だけ意図的に手放し、「理由は説明できないけれど、なぜか心がザワつく・惹かれる選択肢」を優先する実験を始めてください。",
+                voiceScript: "あなたはこれまで、周囲の調和を守るために、自分の内側にある鋭い知性と情熱を静かに封印してきたようですね。でも、もうその力を隠す必要はありません。あなたが感じる違和感こそが、新しい世界を創り出す最も純粋な才能なのです。",
+                dimensions: {
+                    intuition: 92,
+                    shadowEnergy: 84,
+                    boundary: 95,
+                    empathyDepth: 78,
+                    creativity: 88
+                }
+            };
+
+            appState.finalReport = sample;
+            renderReport(sample);
+            if (!isFallback) {
+                showToast("深層心理レポートのサンプルを表示しました");
+            }
+        }
+
+        function copyResultSummary() {
+            if (!appState.finalReport) return;
+            const r = appState.finalReport;
+            const text = `【AETHER 深層心理・無意識領域診断】\n■ 深層元型：${r.archetypeTitle}\n（${r.archetypeSubtitle}）\n\n■ 自覚している自分（ペルソナ）：\n${r.persona}\n\n■ まだ気づいていない深層の自分（シャドウ）：\n${r.shadow}\n\n■ 3つの深層特性：\n${r.blindSpots.map((b, i) => `${i+1}. ${b.title}\n   ${b.description}`).join('\n')}\n\n■ 未開拓の才能：\n${r.hiddenGift}`;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const label = document.getElementById('copy-label');
+            label.textContent = "コピー完了！";
+            showToast("診断結果をクリップボードにコピーしました");
+            setTimeout(() => { label.textContent = "結果をコピー"; }, 2500);
+        }
+
+        function confirmReset() {
+            if (appState.audioPlayer) {
+                appState.audioPlayer.pause();
+                appState.isPlayingAudio = false;
+            }
+            switchScreen('screen-intro');
+        }
+
+        // ==========================================
+        // 背景キャンバス：深層意識の浮遊粒子アニメーション
+        // ==========================================
+        function initParticles() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height, particles;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            particles = Array.from({ length: 45 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 0.5,
+                vx: (Math.random() - 0.5) * 0.25,
+                vy: (Math.random() - 0.5) * 0.25,
+                alpha: Math.random() * 0.5 + 0.1,
+                color: Math.random() > 0.5 ? '212, 175, 55' : '139, 92, 246'
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        window.onload = function () {
+            initParticles();
+        };
+    </script>
+</body>
+</html>
